@@ -1,0 +1,31 @@
+{
+  "name": "bgvolleyball-scraper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "scraper": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PavlovVasil/bgvolleyball-scraper.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PavlovVasil/bgvolleyball-scraper/issues"
+  },
+  "homepage": "https://github.com/PavlovVasil/bgvolleyball-scraper#readme",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "cheerio": "^1.0.0-rc.3",
+    "dotenv": "^8.2.0",
+    "mongoose": "^5.7.9"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.4"
+  }
+}
