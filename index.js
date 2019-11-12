@@ -4,6 +4,17 @@ const mongoose = require('mongoose');
 const RankingSchema = require('./schema/RankingSchema');
 require('dotenv/config');
 
+//convert a url for a given year to a set of Collections to be stored in MongoDB
+const convertPageToTables = async (url) => {
+    const pageResponse = await axios.get(url)
+    const $ = cheerio.load(pageResponse.data);
+    let tables = Array.from($('table'));
+    tables = tables.filter(table => {
+        let rows = $(table).find('tr');
+        return rows.length > 2;
+    });
+}
+
 (async () => {
     // mongoose.connect(
     //     process.env.DB_CONNECTION,
@@ -20,6 +31,8 @@ require('dotenv/config');
         const yearsUrls = Array.from($('#season option')).map(option => {
             return `${baseUrl}/result.php?group_id=1&season=${$(option).attr('value')}`
         });
+
+        convertPageToCollections('https://bgvolleyball.com/result.php?group_id=1&season=1');
         //const yearsUrls = 
     } catch (err) {
         console.log(err);
