@@ -2,8 +2,7 @@ const cheerio = require('cheerio');
 const axios = require('axios');
 const mongoose = require('mongoose');
 const RankingSchema = require('./schema/RankingSchema');
-const Iconv = require('iconv').Iconv;
-const Buffer = require('buffer').Buffer;
+const iconv = require('iconv-lite');
 require('dotenv/config');
 
 
@@ -18,25 +17,25 @@ const convertPageToTables = async (url) => {
     // })
 
 
-    const pageResponse = await axios.get(url)
-    const $ = cheerio.load(pageResponse.data);
+    const pageResponse = await axios.get(url, { responseType: 'arraybuffer' });
+    //We have to convert the response encoding from windows-1251 to UTF-8
+    let data = iconv.decode(pageResponse.data, 'windows-1251');
+    const $ = cheerio.load(data);
     let tables = Array.from($('table'));
     tables = tables.filter(table => {
         let rows = $(table).find('tr');
         return rows.length > 2;
     });
-    convertTableToCollectionObj($, tables[1]);
+    convertTableToCollectionObj($, tables[19]);
 }
 
 //convert a table to a collection object, containing the collection name and documents to be written in MongoDB
 const convertTableToCollectionObj = ($, table) => {
-    let iconv = new Iconv('windows-1251', 'UTF-8');
+    //Checking if this is a ranking table
     const isRankingTable = $(table).find('tr th').attr('colspan') === "10";
-    const temp = new Buffer($(table).find('tr th').text(), 'binary');
-    const conv = new iconv.Iconv('windows-1251', 'UTF-8');
-    const result = conv.convert(temp).toString();
-    s
-    //const collectionName = iconv.convert($(table).find('tr th').text()).toString();
+    //Construct the Collection name duynamically by removing "|", as it is a forbidden character in MongoDB on
+    //Windows, and adding a postfix denoting if this is a ranking Collection
+    const collectionName = `${$(table).find('tr th').text().replace(/ \| /g," ")}${isRankingTable ? ' - Класиране' : ''}`;
     debugger
 }
 
