@@ -6,19 +6,10 @@ const iconv = require('iconv-lite');
 require('dotenv/config');
 
 
-//convert a url for a given year to a set of Collections to be stored in MongoDB
+//Convert a url for a given year to a set of Collections to be stored in MongoDB
 const convertPageToTables = async (url) => {
-    // axios.interceptors.response.use(response => {
-    //     let ctype = response.headers["content-type"];
-    //     if (ctype.includes("charset=windows-1251")) {
-    //         response.data = iconv.decode(response.data, 'windows-1251');
-    //     }
-    //     return response;
-    // })
-
-
     const pageResponse = await axios.get(url, { responseType: 'arraybuffer' });
-    //We have to convert the response encoding from windows-1251 to UTF-8
+    //We have to convert the encoding of the response from windows-1251 to UTF-8
     let data = iconv.decode(pageResponse.data, 'windows-1251');
     const $ = cheerio.load(data);
     let tables = Array.from($('table'));
@@ -29,7 +20,7 @@ const convertPageToTables = async (url) => {
     convertTableToCollectionObj($, tables[19]);
 }
 
-//convert a table to a collection object, containing the collection name and documents to be written in MongoDB
+//Convert a table to a collection object, containing the collection name and documents to be written in MongoDB
 const convertTableToCollectionObj = ($, table) => {
     //Checking if this is a ranking table
     const isRankingTable = $(table).find('tr th').attr('colspan') === "10";
@@ -49,7 +40,7 @@ const convertTableToCollectionObj = ($, table) => {
     try {
         const baseUrl = 'https://bgvolleyball.com';
         const response = await axios.get('https://bgvolleyball.com/result.php?group_id=1&season=1');
-        //parsing the response with cheerio
+        //Parsing the response with cheerio
         const $ = cheerio.load(response.data);
         //Getting years urls from the dropdown
         const yearsUrls = Array.from($('#season option')).map(option => {
@@ -57,7 +48,6 @@ const convertTableToCollectionObj = ($, table) => {
         });
 
         convertPageToTables('https://bgvolleyball.com/result.php?group_id=1&season=1');
-        //const yearsUrls = 
     } catch (err) {
         console.log(err);
     }
