@@ -20,14 +20,12 @@ const convertPageToTables = async (url) => {
     convertTableToCollectionObj($, tables[19]);
 }
 
-//Convert a table to a collection object, containing the collection name and documents to be written in MongoDB
+//Convert a table to a subcollection object, containing the subcollection name and documents to be written in MongoDB
 const convertTableToCollectionObj = ($, table) => {
     //Checking if this is a ranking table
     const isRankingTable = $(table).find('tr th').attr('colspan') === "10";
-    //Construct the Collection name duynamically by removing "|", as it is a forbidden character in MongoDB on
-    //Windows, and adding a postfix denoting if this is a ranking Collection
-    const collectionName = `${$(table).find('tr th').text().replace(/ \| /g," ")}${isRankingTable ? ' - Класиране' : ''}`;
-    debugger
+    //Adding a conditional postfix to the Subcollection name, denoting if this is a ranking Subcollection
+    const collectionName = `${$(table).find('tr th').text()}${isRankingTable ? ' - Класиране' : ''}`;
 }
 
 (async () => {
@@ -42,11 +40,15 @@ const convertTableToCollectionObj = ($, table) => {
         const response = await axios.get('https://bgvolleyball.com/result.php?group_id=1&season=1');
         //Parsing the response with cheerio
         const $ = cheerio.load(response.data);
-        //Getting years urls from the dropdown
-        const yearsUrls = Array.from($('#season option')).map(option => {
-            return `${baseUrl}/result.php?group_id=1&season=${$(option).attr('value')}`
-        });
+        //Getting the year urls and the Collection names from the HTML <option> elements
+        const yearsUrls = Array.from($('#season option')).map(option => (
+            {
+                url: `${baseUrl}/result.php?group_id=1&season=${$(option).attr('value')}`,
+                collectionName: $(option).text()
+            }
+        ));
 
+        debugger
         convertPageToTables('https://bgvolleyball.com/result.php?group_id=1&season=1');
     } catch (err) {
         console.log(err);
