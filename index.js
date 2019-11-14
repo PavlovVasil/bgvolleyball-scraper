@@ -12,20 +12,16 @@ const convertPageToTables = async (url) => {
     //We have to convert the encoding of the response from windows-1251 to UTF-8
     let data = iconv.decode(pageResponse.data, 'windows-1251');
     const $ = cheerio.load(data);
-    let tables = Array.from($('table'));
-    tables = tables.filter(table => {
-        let rows = $(table).find('tr');
-        return rows.length > 2;
-    });
+    const tables = Array.from($('table')).filter(table => $(table).find('tr').length > 2);
     convertTableToCollectionObj($, tables[19]);
 }
 
 //Convert a table to a subcollection object, containing the subcollection name and documents to be written in MongoDB
-const convertTableToCollectionObj = ($, table) => {
+const convertTableToSubcollectionObj = ($, table) => {
     //Checking if this is a ranking table
     const isRankingTable = $(table).find('tr th').attr('colspan') === "10";
     //Adding a conditional postfix to the Subcollection name, denoting if this is a ranking Subcollection
-    const collectionName = `${$(table).find('tr th').text()}${isRankingTable ? ' - Класиране' : ''}`;
+    const subcollectionName = `${$(table).find('tr th').text()}${isRankingTable ? ' - Класиране' : ''}`;
 }
 
 (async () => {
@@ -47,8 +43,6 @@ const convertTableToCollectionObj = ($, table) => {
                 collectionName: $(option).text()
             }
         ));
-
-        debugger
         convertPageToTables('https://bgvolleyball.com/result.php?group_id=1&season=1');
     } catch (err) {
         console.log(err);
