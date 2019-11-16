@@ -6,7 +6,7 @@ const iconv = require('iconv-lite');
 require('dotenv/config');
 
 
-//Convert a url for a given year to a set of Collections to be stored in MongoDB
+//Converts a url for a given year to a set of Collections to be stored in MongoDB
 const convertPageToTables = async (url) => {
     const pageResponse = await axios.get(url, {
         responseType: 'arraybuffer'
@@ -49,6 +49,7 @@ const convertTableToDocs = ($, table) => {
         name: '',
         data: []
     };
+    let rowObj = {};
     for (let i = 0; i < tableRows.length; i++) {
         //Getting the row cells
         let cells = Array.from($(tableRows[i]).find('td'));
@@ -57,34 +58,37 @@ const convertTableToDocs = ($, table) => {
             currentDocument.name = $(cells).eq(0).text();
         } else {
             cells.pop();
-            let rowObj = {};
+            rowObj = {};
             rowObj.date = $(cells).eq(0).text();
             rowObj.time = $(cells).eq(1).text();
             rowObj.firstTeam = $(cells).eq(2).find('a').text();
             rowObj.secondTeam = $(cells).eq(3).find('a').text();
             rowObj.place = $(cells).eq(4).find('a').text();
-            rowObj.games = $(cells).eq(5).find('a').text();
+            rowObj.games = $(cells).eq(5).text();
             //some rows have a varying number of games that have been played
             for (let i = 6; i < cells.length; i++) {
-                rowObj[`game${i-5}`] = $(cells).eq(i).find('a').text();
-            }
+                if ($(cells).eq(i).text() !== '') {
+                    rowObj[`game${i-5}`] = $(cells).eq(i).text();
+                }
+            };
+            currentDocument.data.push(rowObj);
         }
-
-        //if next row doesnt exist or is a name row: 
+        //If next row doesnt exist or is a name row: 
         // 1. push the current document to the documents
         // 2. clear the current document 
-        if ( i === tableRows.length - 1 || Array.from($(tableRows[i]).find('td')).length === 1) {
-            documents.push(currentDocument)
+        if (i === tableRows.length - 1 || Array.from($(tableRows[i + 1]).find('td')).length === 1) {
+            documents.push(currentDocument);
             currentDocument = {
                 name: '',
                 data: []
             };
         }
     }
+    debugger
     return documents;
 }
 
-//Convert a table to a subcollection object, containing the subcollection name and documents to be written in MongoDB
+//Converts a table to a subcollection object, containing the subcollection name and documents to be written in MongoDB
 const convertTableToSubcollectionObj = ($, table) => {
     //Checking if this is a ranking table
     const isRankingTable = $(table).find('tr th').attr('colspan') === "10";
