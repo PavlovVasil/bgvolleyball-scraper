@@ -6,16 +6,16 @@ const iconv = require('iconv-lite');
 require('dotenv/config');
 
 
-//Converts a url for a given year to a set of Collections to be stored in MongoDB
-const convertPageToTables = async (url) => {
-    const pageResponse = await axios.get(url, {
+//Converts an year object to a set of subcollections to be stored in MongoDB
+const convertYearObjToTables = async (yearObj) => {
+    const pageResponse = await axios.get(yearObj.url, {
         responseType: 'arraybuffer'
     });
     //We have to convert the encoding of the response from windows-1251 to UTF-8
     let data = iconv.decode(pageResponse.data, 'windows-1251');
     const $ = cheerio.load(data);
     const tables = Array.from($('table')).filter(table => $(table).find('tr').length > 2);
-    convertTableToSubcollectionObj($, tables[20]);
+    convertTableToSubcollectionObj($, tables[20], yearObj.collectionName);
 }
 
 //Converts a ranking table to an array of documents (objects) to be written in MongoDB
@@ -84,16 +84,16 @@ const convertTableToDocs = ($, table) => {
             };
         }
     }
-    debugger
     return documents;
 }
 
 //Converts a table to a subcollection object, containing the subcollection name and documents to be written in MongoDB
-const convertTableToSubcollectionObj = ($, table) => {
+const convertTableToSubcollectionObj = ($, table, collectionName) => {
     //Checking if this is a ranking table
     const isRankingTable = $(table).find('tr th').attr('colspan') === "10";
     //Adding a conditional postfix to the Subcollection name, denoting if this is a ranking Subcollection
-    const subcollectionName = `${$(table).find('tr th').text()}${isRankingTable ? ' - Класиране' : ''}`;
+    const subcollectionName = `${collectionName}.${
+        $(table).find('tr th').text()}${isRankingTable ? '.Класиране' : ''}`;
     return {
         subcollectionName: subcollectionName,
         documents: isRankingTable ? convertRankingTableToDocs($, table) : convertTableToDocs($, table)
@@ -117,7 +117,7 @@ const convertTableToSubcollectionObj = ($, table) => {
             url: `${baseUrl}/result.php?group_id=1&season=${$(option).attr('value')}`,
             collectionName: $(option).text()
         }));
-        convertPageToTables('https://bgvolleyball.com/result.php?group_id=1&season=1');
+        convertYearObjToTables(yearsCollectionObjects[0]);
     } catch (err) {
         console.log(err);
     }
