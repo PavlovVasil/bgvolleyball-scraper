@@ -20,7 +20,7 @@ const convertPageToTables = async (url) => {
 
 //Converts a ranking table to an array of documents (objects) to be written in MongoDB
 const convertRankingTableToDocs = ($, table) => {
-    //Get all but the first two rows, as they are the title and header
+    //Getting all but the first two rows (they are the title and header and we don't need them)
     const tableRows = Array.from($(table).find('tr')).slice(2);
     const documents = [];
     for (row of tableRows) {
@@ -45,29 +45,43 @@ const convertRankingTableToDocs = ($, table) => {
 const convertTableToDocs = ($, table) => {
     const tableRows = Array.from($(table).find('tr')).slice(1);
     const documents = [];
-    let currentChunk = {
+    let currentDocument = {
         name: '',
         data: []
     };
     for (let i = 0; i < tableRows.length; i++) {
         //Getting the row cells
-        let cells = Array.from($(tableRows[i]).find('td'))
+        let cells = Array.from($(tableRows[i]).find('td'));
         if (cells.length === 1) {
-            //There is only one cell and it is actually the "title" for the current chunk
-            currentChunk.documentName = $(cells).eq(0).text();
-            debugger
+            //There is only one cell and it is actually the "title" for the current document
+            currentDocument.name = $(cells).eq(0).text();
         } else {
             cells.pop();
             let rowObj = {};
-            rowObj.date = cells.eq(0).text();
-            rowObj.time = cells.eq(1).text();
-            rowObj.firstTeam = cells.eq(2).find('a').text();
-            rowObj.secondTeam = cells.eq(3).find('a').text();
-            rowObj.place = cells.eq(4).find('a').text();
-            debugger
+            rowObj.date = $(cells).eq(0).text();
+            rowObj.time = $(cells).eq(1).text();
+            rowObj.firstTeam = $(cells).eq(2).find('a').text();
+            rowObj.secondTeam = $(cells).eq(3).find('a').text();
+            rowObj.place = $(cells).eq(4).find('a').text();
+            rowObj.games = $(cells).eq(5).find('a').text();
+            //some rows have a varying number of games that have been played
+            for (let i = 6; i < cells.length; i++) {
+                rowObj[`game${i-5}`] = $(cells).eq(i).find('a').text();
+            }
         }
-        
+
+        //if next row doesnt exist or is a name row: 
+        // 1. push the current document to the documents
+        // 2. clear the current document 
+        if ( i === tableRows.length - 1 || Array.from($(tableRows[i]).find('td')).length === 1) {
+            documents.push(currentDocument)
+            currentDocument = {
+                name: '',
+                data: []
+            };
+        }
     }
+    return documents;
 }
 
 //Convert a table to a subcollection object, containing the subcollection name and documents to be written in MongoDB
