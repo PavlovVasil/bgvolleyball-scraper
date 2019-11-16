@@ -7,15 +7,22 @@ require('dotenv/config');
 
 
 //Converts an year object to a set of subcollections to be stored in MongoDB
-const convertYearObjToTables = async (yearObj) => {
+const convertYearObjToCollection = async (yearObj) => {
     const pageResponse = await axios.get(yearObj.url, {
         responseType: 'arraybuffer'
     });
+    const collection = {
+        name: yearObj.collectionName,
+        subcollections: []
+    }
     //We have to convert the encoding of the response from windows-1251 to UTF-8
     let data = iconv.decode(pageResponse.data, 'windows-1251');
     const $ = cheerio.load(data);
     const tables = Array.from($('table')).filter(table => $(table).find('tr').length > 2);
-    convertTableToSubcollectionObj($, tables[20], yearObj.collectionName);
+    for (let table of tables) {
+        collection.subcollections.push(convertTableToSubcollectionObj($, table, yearObj.collectionName));
+    }
+    return collection;
 }
 
 //Converts a ranking table to an array of documents (objects) to be written in MongoDB
@@ -94,6 +101,7 @@ const convertTableToSubcollectionObj = ($, table, collectionName) => {
     //Adding a conditional postfix to the Subcollection name, denoting if this is a ranking Subcollection
     const subcollectionName = `${collectionName}.${
         $(table).find('tr th').text()}${isRankingTable ? '.Класиране' : ''}`;
+        debugger
     return {
         subcollectionName: subcollectionName,
         documents: isRankingTable ? convertRankingTableToDocs($, table) : convertTableToDocs($, table)
@@ -117,7 +125,9 @@ const convertTableToSubcollectionObj = ($, table, collectionName) => {
             url: `${baseUrl}/result.php?group_id=1&season=${$(option).attr('value')}`,
             collectionName: $(option).text()
         }));
-        convertYearObjToTables(yearsCollectionObjects[0]);
+        //testing with the first year only
+        const firstCollection = convertYearObjToCollection(yearsCollectionObjects[0]);
+        debugger
     } catch (err) {
         console.log(err);
     }
