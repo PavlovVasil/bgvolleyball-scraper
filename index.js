@@ -32,18 +32,18 @@ const convertRankingTableToDocs = ($, table) => {
     const documents = [];
     for (row of tableRows) {
         const rowNode = $(row).find('td');
-        const rowObj = {};
-        rowObj.ranking = parseInt(rowNode.eq(0).text(), 10);
-        rowObj.team = rowNode.eq(1).text();
-        rowObj.matches = parseInt(rowNode.eq(2).text(), 10);
-        rowObj.wins = parseInt(rowNode.eq(3).text(), 10);
-        rowObj.losses = parseInt(rowNode.eq(4).text(), 10);
-        rowObj.games = rowNode.eq(5).text();
-        rowObj.gameRatio = rowNode.eq(6).text();
-        rowObj.score = rowNode.eq(7).text();
-        rowObj.scoreRatio = rowNode.eq(8).text();
-        rowObj.points = parseInt(rowNode.eq(9).text(), 10);
-        documents.push(rowObj);
+        const currentRow = {};
+        currentRow.ranking = parseInt(rowNode.eq(0).text(), 10);
+        currentRow.team = rowNode.eq(1).text();
+        currentRow.matches = parseInt(rowNode.eq(2).text(), 10);
+        currentRow.wins = parseInt(rowNode.eq(3).text(), 10);
+        currentRow.losses = parseInt(rowNode.eq(4).text(), 10);
+        currentRow.games = rowNode.eq(5).text();
+        currentRow.gameRatio = rowNode.eq(6).text();
+        currentRow.score = rowNode.eq(7).text();
+        currentRow.scoreRatio = rowNode.eq(8).text();
+        currentRow.points = parseInt(rowNode.eq(9).text(), 10);
+        documents.push(currentRow);
     }
     return documents;
 }
@@ -56,7 +56,7 @@ const convertTableToDocs = ($, table) => {
         name: '',
         data: []
     };
-    let rowObj = {};
+    let currentRow = {};
     for (let i = 0; i < tableRows.length; i++) {
         //Getting the row cells
         let cells = Array.from($(tableRows[i]).find('td'));
@@ -65,26 +65,26 @@ const convertTableToDocs = ($, table) => {
             currentDocument.name = $(cells).eq(0).text();
         } else {
             cells.pop();
-            rowObj = {};
-            rowObj.date = $(cells).eq(0).text();
-            rowObj.time = $(cells).eq(1).text();
-            rowObj.firstTeam = $(cells).eq(2).find('a').text();
-            rowObj.secondTeam = $(cells).eq(3).find('a').text();
-            rowObj.place = $(cells).eq(4).find('a').text();
-            rowObj.games = $(cells).eq(5).text();
+            currentRow = {};
+            currentRow.date = $(cells).eq(0).text();
+            currentRow.time = $(cells).eq(1).text();
+            currentRow.firstTeam = $(cells).eq(2).find('a').text();
+            currentRow.secondTeam = $(cells).eq(3).find('a').text();
+            currentRow.place = $(cells).eq(4).find('a').text();
+            currentRow.games = $(cells).eq(5).text();
             //some rows have a varying number of games that have been played
             for (let i = 6; i < cells.length; i++) {
                 if ($(cells).eq(i).text() !== '') {
-                    rowObj[`game${i-5}`] = $(cells).eq(i).text();
+                    currentRow[`game${i-5}`] = $(cells).eq(i).text();
                 }
             };
-            currentDocument.data.push(rowObj);
+            currentDocument.data.push(currentRow);
         }
         //If next row doesnt exist or is a name row: 
         // 1. push the current document to the documents
         // 2. clear the current document 
         if (i === tableRows.length - 1 || Array.from($(tableRows[i + 1]).find('td')).length === 1) {
-            documents.push(currentDocument);
+            documents.push({[currentDocument.name]: currentDocument.data});
             currentDocument = {
                 name: '',
                 data: []
@@ -101,7 +101,6 @@ const convertTableToSubcollectionObj = ($, table, collectionName) => {
     //Adding a conditional postfix to the Subcollection name, denoting if this is a ranking Subcollection
     const subcollectionName = `${collectionName}.${
         $(table).find('tr th').text()}${isRankingTable ? '.Класиране' : ''}`;
-        debugger
     return {
         subcollectionName: subcollectionName,
         documents: isRankingTable ? convertRankingTableToDocs($, table) : convertTableToDocs($, table)
@@ -126,7 +125,7 @@ const convertTableToSubcollectionObj = ($, table, collectionName) => {
             collectionName: $(option).text()
         }));
         //testing with the first year only
-        const firstCollection = convertYearObjToCollection(yearsCollectionObjects[0]);
+        const firstCollection = await convertYearObjToCollection(yearsCollectionObjects[0]);
         debugger
     } catch (err) {
         console.log(err);
