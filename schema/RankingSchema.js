@@ -13,18 +13,4 @@ const RankingTableSchema = mongoose.Schema({
     points: Number
 })
 
-const TableSchema = mongoose.Schema({
-    name: String,
-    data: Array({
-        date: String,
-        time: String,
-        firstTeam: String,
-        secondTeam: String,
-        place: String,
-        gameScore: String,
-        games: [String]
-    })
-})
-
-//module.exports = mongoose.model('Rankings', RankingSchema)
-module.exports = RankingSchema;
+module.exports = RankingTableSchema;

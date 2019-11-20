@@ -1,7 +1,8 @@
 const cheerio = require('cheerio');
 const axios = require('axios');
 const mongoose = require('mongoose');
-const RankingSchema = require('./schema/RankingSchema');
+const RankingTableSchema = require('./schema/RankingSchema');
+const TableSchema = require('./schema/TableSchema');
 const iconv = require('iconv-lite');
 require('dotenv/config');
 
@@ -103,17 +104,19 @@ const convertTableToSubcollectionObj = ($, table, collectionName) => {
         $(table).find('tr th').text()}${isRankingTable ? '.Класиране' : ''}`;
     return {
         subcollectionName: subcollectionName,
-        documents: isRankingTable ? convertRankingTableToDocs($, table) : convertTableToDocs($, table)
+        documents: isRankingTable 
+            ? convertRankingTableToDocs($, table) 
+            : convertTableToDocs($, table)
     }
 }
 
 (async () => {
-    // mongoose.connect(
-    //     process.env.DB_CONNECTION,
-    //     { useNewUrlParser: true, useUnifiedTopology: true },
-    //     () => {
-    //         console.log('connected to DB');
-    //     })
+    mongoose.connect(
+        process.env.DB_CONNECTION,
+        { useNewUrlParser: true, useUnifiedTopology: true },
+        () => {
+            console.log('connected to DB');
+    })
     try {
         const baseUrl = 'https://bgvolleyball.com';
         const response = await axios.get('https://bgvolleyball.com/result.php?group_id=1&season=1');
@@ -126,7 +129,6 @@ const convertTableToSubcollectionObj = ($, table, collectionName) => {
         }));
         //testing with the first year only
         const firstCollection = await convertYearObjToCollection(yearsCollectionObjects[0]);
-        debugger
     } catch (err) {
         console.log(err);
     }
