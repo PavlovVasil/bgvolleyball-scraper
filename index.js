@@ -81,7 +81,7 @@ const convertTableToDocs = ($, table) => {
             };
             currentDocument.data.push(currentRow);
         }
-        //If next row doesnt exist or is a name row: 
+        //If next row doesnt exist, or is a name row: 
         // 1. push the current document to the documents
         // 2. clear the current document 
         if (i === tableRows.length - 1 || Array.from($(tableRows[i + 1]).find('td')).length === 1) {
@@ -95,11 +95,11 @@ const convertTableToDocs = ($, table) => {
     return documents;
 }
 
-//Converts a table to a subcollection object, containing the subcollection name and documents to be written in MongoDB
+//Converts a table to a subcollection object containing the subcollection name and documents to be written in MongoDB
 const convertTableToSubcollectionObj = ($, table, collectionName) => {
     //Checking if this is a ranking table
     const isRankingTable = $(table).find('tr th').attr('colspan') === "10";
-    //Adding a conditional postfix to the Subcollection name, denoting if this is a ranking Subcollection
+    //Adding a conditional postfix to the Subcollection name, denoting if this is a ranking subcollection
     const subcollectionName = `${collectionName}.${
         $(table).find('tr th').text()}${isRankingTable ? '.Класиране' : ''}`;
     return {
