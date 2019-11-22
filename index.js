@@ -81,8 +81,8 @@ const convertTableToDocs = ($, table) => {
             };
             currentDocument.data.push(currentRow);
         }
-        //If next row doesnt exist, or is a name row: 
-        // 1. push the current document to the documents
+        //If the next row doesn't exist, or it is a document name row: 
+        // 1. push the current document to the documents array
         // 2. clear the current document 
         if (i === tableRows.length - 1 || Array.from($(tableRows[i + 1]).find('td')).length === 1) {
             documents.push({[currentDocument.name]: currentDocument.data});
