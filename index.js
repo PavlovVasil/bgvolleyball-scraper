@@ -7,30 +7,31 @@ const iconv = require('iconv-lite');
 require('dotenv/config');
 
 
-//Converts an year object to a set of subcollections to be stored in MongoDB
+//Converts an year object to a collection and documents to be stored in MongoDB
 const convertYearObjToCollection = async (yearObj) => {
     const pageResponse = await axios.get(yearObj.url, {
         responseType: 'arraybuffer'
     });
     const collection = {
         name: yearObj.collectionName,
-        subcollections: []
+        documents: []
     }
     //We have to convert the encoding of the response from windows-1251 to UTF-8
     let data = iconv.decode(pageResponse.data, 'windows-1251');
     const $ = cheerio.load(data);
     const tables = Array.from($('table')).filter(table => $(table).find('tr').length > 2);
     for (let table of tables) {
-        collection.subcollections.push(convertTableToSubcollectionObj($, table, yearObj.collectionName));
+        collection.documents.push(convertTableToSubcollectionObj($, table, yearObj.collectionName));
     }
     return collection;
 }
 
-//Converts a ranking table to an array of documents (objects) to be written in MongoDB
-const convertRankingTableToDocs = ($, table) => {
+//Scrapes an array of rankings from a ranking table and returns them
+//so they could be added to the corresponding document
+const scrapeRankings = ($, table) => {
     //Getting all but the first two rows (they are the title and header and we don't need them)
     const tableRows = Array.from($(table).find('tr')).slice(2);
-    const documents = [];
+    const rankings = [];
     for (row of tableRows) {
         const rowNode = $(row).find('td');
         const currentRow = {};
@@ -44,9 +45,9 @@ const convertRankingTableToDocs = ($, table) => {
         currentRow.score = rowNode.eq(7).text();
         currentRow.scoreRatio = rowNode.eq(8).text();
         currentRow.points = parseInt(rowNode.eq(9).text(), 10);
-        documents.push(currentRow);
+        rankings.push(currentRow);
     }
-    return documents;
+    return rankings;
 }
 
 //Converts a non-ranking table to an array of documents (objects) to be written in MongoDB
@@ -105,7 +106,7 @@ const convertTableToSubcollectionObj = ($, table, collectionName) => {
     return {
         subcollectionName: subcollectionName,
         documents: isRankingTable 
-            ? convertRankingTableToDocs($, table) 
+            ? scrapeRankings($, table) 
             : convertTableToDocs($, table)
     }
 }
