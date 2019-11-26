@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const DocumentSchema = mongoose.Schema({
+const TournamentSchema = mongoose.Schema({
     name: String,
     rounds: Array({
         roundName: String,
@@ -28,4 +28,4 @@ const DocumentSchema = mongoose.Schema({
     })
 })
 
-module.exports = DocumentSchema;
+module.exports = TournamentSchema;
