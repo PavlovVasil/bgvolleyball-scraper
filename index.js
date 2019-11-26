@@ -22,8 +22,19 @@ const convertYearObjToCollection = async (yearObj) => {
     const tables = Array.from($('table')).filter(table => $(table).find('tr').length > 2);
     
     debugger
-    for (let i = 0; i < tables.length; i++) {
-        collection.documents.push(convertTableToSubcollectionObj($, tables[i], yearObj.collectionName));
+    for (let i = 1; i < tables.length - 1; i++) {
+        let document = {};
+        document.name = $(tables[i]).find('tr th').text();
+        document.data = convertTableToDocument(tables[i]);
+        const isNextTableRanking = $(tables[i + 1]).find('tr th').attr('colspan') === "10";
+        if (isNextTableRanking) {
+            let rankings = scrapeRankings($, tables[i + 1]);
+            document.rankings = rankings;
+            //skipping the next table, because it is a field in the current document
+            i++; 
+        }
+        collection.documents.push(document);
+        //collection.documents.push(convertTableToSubcollectionObj($, tables[i], yearObj.collectionName));
     }
     return collection;
 }
