@@ -129,14 +129,16 @@ const convertTableToRounds = ($, table) => {
             url: `${baseUrl}/result.php?group_id=1&season=${$(option).attr('value')}`,
             collectionName: $(option).text()
         }));
-        //testing with the first year only
-        const firstCollection = await convertYearObjToCollection(yearsCollectionObjects[0]);
-        const Tournament = mongoose.model(firstCollection.name, TournamentSchema);
-        try {
-            await Tournament.insertMany(firstCollection.documents);
-        } catch (err) {
-            console.log(err);
-        }
+        
+        for (let yearObj of yearsCollectionObjects) {
+            const collection = await convertYearObjToCollection(yearObj);
+            const Tournament = mongoose.model(collection.name, TournamentSchema);
+            try {
+                await Tournament.insertMany(collection.documents);
+            } catch (err) {
+                console.log(err);
+            }
+        }      
         await mongoose.disconnect();
         console.log('Closed the DB');
     } catch (err) {
