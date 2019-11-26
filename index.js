@@ -20,22 +20,21 @@ const convertYearObjToCollection = async (yearObj) => {
     let data = iconv.decode(pageResponse.data, 'windows-1251');
     const $ = cheerio.load(data);
     const tables = Array.from($('table')).filter(table => $(table).find('tr').length > 2);
-    
-    debugger
+
     for (let i = 1; i < tables.length - 1; i++) {
         let document = {};
         document.name = $(tables[i]).find('tr th').text();
-        document.data = convertTableToDocument(tables[i]);
+        document.data = convertTableToDocument($, tables[i]);
         const isNextTableRanking = $(tables[i + 1]).find('tr th').attr('colspan') === "10";
         if (isNextTableRanking) {
             let rankings = scrapeRankings($, tables[i + 1]);
             document.rankings = rankings;
-            //skipping the next table, because it is a field in the current document
+            //skipping the next table, because it should be a field in the current document
             i++; 
         }
         collection.documents.push(document);
-        //collection.documents.push(convertTableToSubcollectionObj($, tables[i], yearObj.collectionName));
     }
+    debugger
     return collection;
 }
 
@@ -107,21 +106,6 @@ const convertTableToDocument = ($, table) => {
         }
     }
     return rounds;
-}
-
-//Converts a table to a subcollection object containing the subcollection name and documents to be written in MongoDB
-const convertTableToSubcollectionObj = ($, table, collectionName) => {
-    //Checking if this is a ranking table
-    const isRankingTable = $(table).find('tr th').attr('colspan') === "10";
-    //Adding a conditional postfix to the Subcollection name, denoting if this is a ranking subcollection
-    const subcollectionName = `${collectionName}.${
-        $(table).find('tr th').text()}${isRankingTable ? '.Класиране' : ''}`;
-    return {
-        subcollectionName: subcollectionName,
-        documents: isRankingTable 
-            ? scrapeRankings($, table) 
-            : convertTableToDocument($, table)
-    }
 }
 
 (async () => {
