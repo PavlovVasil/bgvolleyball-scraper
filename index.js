@@ -1,8 +1,7 @@
 const cheerio = require('cheerio');
 const axios = require('axios');
 const mongoose = require('mongoose');
-const RankingTableSchema = require('./schema/RankingSchema');
-const TableSchema = require('./schema/TableSchema');
+const DocumentSchema = require('./schema/DocumentSchema');
 const iconv = require('iconv-lite');
 require('dotenv/config');
 
@@ -24,17 +23,16 @@ const convertYearObjToCollection = async (yearObj) => {
     for (let i = 1; i < tables.length - 1; i++) {
         let document = {};
         document.name = $(tables[i]).find('tr th').text();
-        document.data = convertTableToDocument($, tables[i]);
+        document.rounds = convertTableToRounds($, tables[i]);
         const isNextTableRanking = $(tables[i + 1]).find('tr th').attr('colspan') === "10";
         if (isNextTableRanking) {
             let rankings = scrapeRankings($, tables[i + 1]);
             document.rankings = rankings;
             //skipping the next table, because it should be a field in the current document
-            i++; 
+            i++;
         }
         collection.documents.push(document);
     }
-    debugger
     return collection;
 }
 
@@ -63,7 +61,7 @@ const scrapeRankings = ($, table) => {
 }
 
 //Converts a non-ranking table to an array of rounds (objects) to be written in a document
-const convertTableToDocument = ($, table) => {
+const convertTableToRounds = ($, table) => {
     const tableRows = Array.from($(table).find('tr')).slice(1);
     const rounds = [];
     let currentRound = {
@@ -98,7 +96,9 @@ const convertTableToDocument = ($, table) => {
         // 1. push the current round to the rounds array
         // 2. clear the current round 
         if (i === tableRows.length - 1 || Array.from($(tableRows[i + 1]).find('td')).length === 1) {
-            rounds.push({[currentRound.name]: currentRound.data});
+            rounds.push({
+                [currentRound.name]: currentRound.data
+            });
             currentRound = {
                 name: '',
                 data: []
@@ -127,6 +127,7 @@ const convertTableToDocument = ($, table) => {
         }));
         //testing with the first year only
         const firstCollection = await convertYearObjToCollection(yearsCollectionObjects[0]);
+        debugger
     } catch (err) {
         console.log(err);
     }

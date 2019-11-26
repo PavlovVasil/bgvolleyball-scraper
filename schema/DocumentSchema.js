@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
-const TableSchema = mongoose.Schema({
+const DocumentSchema = mongoose.Schema({
     name: String,
-    data: Array({
+    rounds: Array({
         date: String,
         time: String,
         firstTeam: String,
@@ -25,4 +25,4 @@ const TableSchema = mongoose.Schema({
     })
 })
 
-module.exports = TableSchema;
+module.exports = DocumentSchema;
