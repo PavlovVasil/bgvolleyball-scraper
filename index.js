@@ -1,7 +1,7 @@
 const cheerio = require('cheerio');
 const axios = require('axios');
 const mongoose = require('mongoose');
-const DocumentSchema = require('./schema/DocumentSchema');
+const TournamentSchema = require('./schema/TournamentSchema');
 const iconv = require('iconv-lite');
 require('dotenv/config');
 
@@ -97,7 +97,9 @@ const convertTableToRounds = ($, table) => {
         // 2. clear the current round 
         if (i === tableRows.length - 1 || Array.from($(tableRows[i + 1]).find('td')).length === 1) {
             rounds.push({
-                [currentRound.name]: currentRound.data
+                roundName: currentRound.name,
+                data: currentRound.data
+                //[currentRound.name]: currentRound.data
             });
             currentRound = {
                 name: '',
@@ -129,14 +131,14 @@ const convertTableToRounds = ($, table) => {
         }));
         //testing with the first year only
         const firstCollection = await convertYearObjToCollection(yearsCollectionObjects[0]);
-        debugger
-        const Collection = mongoose.model(firstCollection.name, DocumentSchema);
+        const Tournament = mongoose.model(firstCollection.name, TournamentSchema);
         try {
-            await Collection.insertMany(firstCollection.documents);
+            await Tournament.insertMany(firstCollection.documents);
         } catch (err) {
             console.log(err);
         }
-        mongoose.disconnect();
+        await mongoose.disconnect();
+        console.log('Closed the DB');
     } catch (err) {
         console.log(err);
     }
