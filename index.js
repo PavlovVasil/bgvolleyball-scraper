@@ -109,12 +109,14 @@ const convertTableToRounds = ($, table) => {
 }
 
 (async () => {
-    // mongoose.connect(
-    //     process.env.DB_CONNECTION,
-    //     { useNewUrlParser: true, useUnifiedTopology: true },
-    //     () => {
-    //         console.log('connected to DB');
-    // })
+    mongoose.connect(
+        process.env.DB_CONNECTION, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        },
+        () => {
+            console.log('connected to DB');
+        })
     try {
         const baseUrl = 'https://bgvolleyball.com';
         const response = await axios.get('https://bgvolleyball.com/result.php?group_id=1&season=1');
@@ -128,6 +130,13 @@ const convertTableToRounds = ($, table) => {
         //testing with the first year only
         const firstCollection = await convertYearObjToCollection(yearsCollectionObjects[0]);
         debugger
+        const Collection = mongoose.model(firstCollection.name, DocumentSchema);
+        try {
+            await Collection.insertMany(firstCollection.documents);
+        } catch (err) {
+            console.log(err);
+        }
+        mongoose.disconnect();
     } catch (err) {
         console.log(err);
     }

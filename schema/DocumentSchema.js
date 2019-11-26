@@ -3,13 +3,16 @@ const mongoose = require('mongoose');
 const DocumentSchema = mongoose.Schema({
     name: String,
     rounds: Array({
-        date: String,
-        time: String,
-        firstTeam: String,
-        secondTeam: String,
-        place: String,
-        gameScore: String,
-        games: [String]
+        roundName: String,
+        data: Array({
+            date: String,
+            time: String,
+            firstTeam: String,
+            secondTeam: String,
+            place: String,
+            gameScore: String,
+            games: [String]
+        })
     }),
     rankings: Array({
         ranking: Number,
