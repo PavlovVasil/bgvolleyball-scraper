@@ -20,8 +20,10 @@ const convertYearObjToCollection = async (yearObj) => {
     let data = iconv.decode(pageResponse.data, 'windows-1251');
     const $ = cheerio.load(data);
     const tables = Array.from($('table')).filter(table => $(table).find('tr').length > 2);
-    for (let table of tables) {
-        collection.documents.push(convertTableToSubcollectionObj($, table, yearObj.collectionName));
+    
+    debugger
+    for (let i = 0; i < tables.length; i++) {
+        collection.documents.push(convertTableToSubcollectionObj($, tables[i], yearObj.collectionName));
     }
     return collection;
 }
@@ -50,11 +52,11 @@ const scrapeRankings = ($, table) => {
     return rankings;
 }
 
-//Converts a non-ranking table to an array of documents (objects) to be written in MongoDB
-const convertTableToDocs = ($, table) => {
+//Converts a non-ranking table to an array of rounds (objects) to be written in a document
+const convertTableToDocument = ($, table) => {
     const tableRows = Array.from($(table).find('tr')).slice(1);
-    const documents = [];
-    let currentDocument = {
+    const rounds = [];
+    let currentRound = {
         name: '',
         data: []
     };
@@ -64,7 +66,7 @@ const convertTableToDocs = ($, table) => {
         let cells = Array.from($(tableRows[i]).find('td'));
         if (cells.length === 1) {
             //There is only one cell and it is actually the "title" for the current document
-            currentDocument.name = $(cells).eq(0).text();
+            currentRound.name = $(cells).eq(0).text();
         } else {
             cells.pop();
             currentRow = {};
@@ -80,20 +82,20 @@ const convertTableToDocs = ($, table) => {
                     currentRow[`game${i-5}`] = $(cells).eq(i).text();
                 }
             };
-            currentDocument.data.push(currentRow);
+            currentRound.data.push(currentRow);
         }
-        //If the next row doesn't exist, or it is a document name row: 
-        // 1. push the current document to the documents array
-        // 2. clear the current document 
+        //If the next row doesn't exist, or it is a Round name row: 
+        // 1. push the current round to the rounds array
+        // 2. clear the current round 
         if (i === tableRows.length - 1 || Array.from($(tableRows[i + 1]).find('td')).length === 1) {
-            documents.push({[currentDocument.name]: currentDocument.data});
-            currentDocument = {
+            rounds.push({[currentRound.name]: currentRound.data});
+            currentRound = {
                 name: '',
                 data: []
             };
         }
     }
-    return documents;
+    return rounds;
 }
 
 //Converts a table to a subcollection object containing the subcollection name and documents to be written in MongoDB
@@ -107,17 +109,17 @@ const convertTableToSubcollectionObj = ($, table, collectionName) => {
         subcollectionName: subcollectionName,
         documents: isRankingTable 
             ? scrapeRankings($, table) 
-            : convertTableToDocs($, table)
+            : convertTableToDocument($, table)
     }
 }
 
 (async () => {
-    mongoose.connect(
-        process.env.DB_CONNECTION,
-        { useNewUrlParser: true, useUnifiedTopology: true },
-        () => {
-            console.log('connected to DB');
-    })
+    // mongoose.connect(
+    //     process.env.DB_CONNECTION,
+    //     { useNewUrlParser: true, useUnifiedTopology: true },
+    //     () => {
+    //         console.log('connected to DB');
+    // })
     try {
         const baseUrl = 'https://bgvolleyball.com';
         const response = await axios.get('https://bgvolleyball.com/result.php?group_id=1&season=1');
