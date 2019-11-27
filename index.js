@@ -8,9 +8,15 @@ require('dotenv/config');
 
 //Converts an year object to a collection and documents to be stored in MongoDB
 const convertYearObjToCollection = async (yearObj) => {
-    const pageResponse = await axios.get(yearObj.url, {
+    let pageResponse;
+    
+    try{
+    pageResponse = await axios.get(yearObj.url, {
         responseType: 'arraybuffer'
     });
+    } catch (err) {
+        console.log(err)
+    }
     const collection = {
         name: yearObj.collectionName,
         documents: []
@@ -99,7 +105,6 @@ const convertTableToRounds = ($, table) => {
             rounds.push({
                 roundName: currentRound.name,
                 data: currentRound.data
-                //[currentRound.name]: currentRound.data
             });
             currentRound = {
                 name: '',
@@ -129,9 +134,8 @@ const convertTableToRounds = ($, table) => {
             url: `${baseUrl}/result.php?group_id=1&season=${$(option).attr('value')}`,
             collectionName: $(option).text()
         }));
-        
-        for (let yearObj of yearsCollectionObjects) {
-            const collection = await convertYearObjToCollection(yearObj);
+        for (let i = 0; i < yearsCollectionObjects.length; i++) {
+            const collection = await convertYearObjToCollection(yearsCollectionObjects[i]);
             const Tournament = mongoose.model(collection.name, TournamentSchema);
             try {
                 await Tournament.insertMany(collection.documents);
